@@ -1,0 +1,1 @@
+ps -ef | grep hdfs_start | grep -v grep | awks '{print \$2}' |xargs kill -9
