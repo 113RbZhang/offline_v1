@@ -16,6 +16,11 @@ sqoop import --connect jdbc:mysql://192.168.58.1/gmall \
       --delete-target-dir \
       --null-string '\\N' --null-non-string '\\N' \
       --fields-terminated-by '\t' --lines-terminated-by '\n'
-
-
 done
+
+
+
+
+
+
+
