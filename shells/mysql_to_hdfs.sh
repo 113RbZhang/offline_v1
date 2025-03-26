@@ -1,3 +1,6 @@
+#sqoop
+
+
 for i in activity_info base_category3\
                                 base_dic\
                                 cart_info\
