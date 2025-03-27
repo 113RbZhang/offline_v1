@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="@10.39.48.30" uuid="12c51179-1e50-431b-910c-bdecc3fbf85d">
-      <driver-ref>hive</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.apache.hive.jdbc.HiveDriver</jdbc-driver>
-      <jdbc-url>jdbc:hive2://10.39.48.30:10000</jdbc-url>
-      <working-dir>$ProjectFileDir$</working-dir>
-    </data-source>
     <data-source source="LOCAL" name="@cdh01" uuid="d6a1fc24-6abf-4989-af7b-d89cf308799d">
       <driver-ref>hive</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.apache.hive.jdbc.HiveDriver</jdbc-driver>
       <jdbc-url>jdbc:hive2://cdh01:10000</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="@cdh03" uuid="2e3f558a-e334-42e0-a534-885c36c97037">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://cdh03:3306</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

@@ -1,7 +1,6 @@
 set hive.exec.mode.local.auto  =true;
-
-create database if not exists dev_realtime_v1_runbo_zhang;
-use dev_realtime_v1_runbo_zhang;
+create database if not exists dev_realtime_v2_runbo_zhang;
+use dev_realtime_v2_runbo_zhang;
 
 -- 1.创建电商业务相关的表：
 
@@ -30,12 +29,12 @@ create table if not exists ods_order_info(
 `feight_fee`decimal(16,2) COMMENT '运费'
 )partitioned by (dt string)
     row format delimited fields terminated by '\t'
-location '/2207A/runbo_zhang/gmall/ods/ods_order_info'
+location '/2207A/gmall/data/ods/ods_order_info'
     ;
 
 
 -- drop table if exists ods_order_info_tem;
-create temporary table if not exists ods_order_info_tem(
+create  table if not exists ods_order_info_tem(
     `id` bigint    COMMENT '编号',
     `consignee` string   COMMENT '收货人',
     `consignee_tel` string   COMMENT '收件人电话',
@@ -58,17 +57,18 @@ create temporary table if not exists ods_order_info_tem(
     `feight_fee`decimal(16,2) COMMENT '运费'
 )
     row format delimited fields terminated by '\t'
-    location '/2207A/runbo_zhang/gmall/ods/ods_order_info_tem'
-    ;
+    stored as parquet
+ location  '/2207A/gmall/data/ods/ods_order_info_tem';
 
-
--- load data inpath '/2207A/runbo_zhang/gmall/yewu/order_info' overwrite into table ods_order_info_tem;
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.exec.dynamic.partition=true;
+load data inpath '/2207A/gmall/data/yewu/order_info' overwrite into table ods_order_info_tem;
 select * from ods_order_info_tem;
 
-insert into ods_order_info
-select *,create_time from ods_order_info_tem;
+insert into  ods_order_info partition (create_time)
+select *  from ods_order_info_tem;
 select *from ods_order_info;
-
+select *,rank() over (order by id)from ods_order_info_tem;
 
 
 --todo ods_order_detail、
@@ -87,13 +87,13 @@ create table if not exists ods_order_detail(
    `source_id` bigint  COMMENT '来源编号'
 )partitioned by (dt string)
 row format delimited fields terminated by '\t'
-location '/2207A/runbo_zhang/gmall/ods/ods_order_detail'
+location '/2207A/gmall/data/ods/ods_order_detail'
     ;
 
 
 
 -- drop table if exists ods_order_detail_tem;
-create temporary table if not exists ods_order_detail_tem(
+create  table if not exists ods_order_detail_tem(
  `id` bigint   COMMENT '编号',
  `order_id` bigint  COMMENT '订单编号',
  `sku_id` bigint  COMMENT 'sku_id',
@@ -106,10 +106,10 @@ create temporary table if not exists ods_order_detail_tem(
  `source_id` bigint  COMMENT '来源编号'
 )
 row format delimited fields terminated by '\t'
-location '/2207A/runbo_zhang/gmall/ods/ods_order_detail_tem'
+location '/2207A/gmall/data/ods/ods_order_detail_tem'
     ;
 
--- load data inpath '/2207A/runbo_zhang/gmall/yewu/order_detail' overwrite into table ods_order_detail_tem;
+ load data inpath '/2207A/gmall/data/yewu/order_detail' overwrite into table ods_order_detail_tem;
 -- select *from ods_order_detail_tem;
 
 insert into ods_order_detail
@@ -131,13 +131,13 @@ create table if not exists ods_sku_info(
                                            `create_time` string  COMMENT '创建时间'
 )partitioned by (dt string)
     row format delimited fields terminated by '\t'
-    location '/2207A/runbo_zhang/gmall/ods/ods_sku_info'
+ location  '/2207A/gmall/data/ods/ods_sku_info'
     ;
 
 
 
 -- drop table if exists ods_sku_info_tem;
-create temporary table if not exists ods_sku_info_tem(
+create  table if not exists ods_sku_info_tem(
  `id` bigint   COMMENT 'skuid(itemID)',
  `spu_id` bigint  COMMENT 'spuid',
  `price` decimal(10,0)  COMMENT '价格',
@@ -150,10 +150,11 @@ create temporary table if not exists ods_sku_info_tem(
  `create_time` string  COMMENT '创建时间'
 )
     row format delimited fields terminated by '\t'
-    location '/2207A/runbo_zhang/gmall/ods/ods_sku_info_tem'
+    
+ location  '/2207A/gmall/data/ods/ods_sku_info_tem'
     ;
 
--- load data inpath '/2207A/runbo_zhang/gmall/yewu/sku_info' overwrite into table ods_sku_info_tem;
+ load data inpath '/2207A/gmall/data/yewu/sku_info' overwrite into table ods_sku_info_tem;
 select *from ods_sku_info_tem;
 
 insert into ods_sku_info
@@ -181,13 +182,13 @@ create table if not exists ods_user_info(
 `operate_time` string  COMMENT '修改时间'
 )partitioned by (dt string)
     row format delimited fields terminated by '\t'
-    location '/2207A/runbo_zhang/gmall/ods/ods_user_info'
+ location  '/2207A/gmall/data/ods/ods_user_info'
     ;
 
 
 
 -- -- drop table if exists ods_user_info_tem;
-create temporary table if not exists ods_user_info_tem(
+create  table if not exists ods_user_info_tem(
 `id` bigint   COMMENT '编号',
 `login_name` string   COMMENT '用户名称',
 `nick_name` string   COMMENT '用户昵称',
@@ -203,10 +204,10 @@ create temporary table if not exists ods_user_info_tem(
 `operate_time` string  COMMENT '修改时间'
 )
     row format delimited fields terminated by '\t'
-    location '/2207A/runbo_zhang/gmall/ods/ods_user_info_tem'
+  location  '/2207A/gmall/data/ods/ods_user_info_tem'
     ;
 
-load data inpath '/2207A/runbo_zhang/gmall/yewu/user_info' overwrite into table ods_user_info_tem;
+load data inpath '/2207A/gmall/data/yewu/user_info' overwrite into table ods_user_info_tem;
 select *from ods_user_info_tem;
 
 insert into ods_user_info
@@ -219,7 +220,7 @@ select *from ods_user_info;
 -- 1. 需要按天分区 （3分）
 -- 2. 数表过程自主使用数据存储格式、压缩格式。（3分）
 -- 3.  列的分隔使用’\t’。（3分）
--- 4.  指定存储位置为 ‘/2207A/runbo_zhang/gmall/ods/表名’ (3分)
+-- 4.  指定存储位置为 ‘/2207A/gmall/data/ods/表名’ (3分)
 -- 5.数据加载到ODS层表（5分）
 -- 6. 数据加载完整（3分）
 select *from ods_order_info;
