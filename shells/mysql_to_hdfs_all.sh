@@ -53,6 +53,6 @@ do
         -m 1 -z --compression-codec lzop  \
         --delete-target-dir \
        --null-string '\\N' --null-non-string '\\N' \
-        --fields-terminated-by '|' --lines-terminated-by '\n'
+        --fields-terminated-by '\t' --lines-terminated-by '\n'
 done
 
