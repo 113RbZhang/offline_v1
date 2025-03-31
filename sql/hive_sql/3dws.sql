@@ -53,9 +53,8 @@ insert into dws_fgl
 select order_type,sum(`if`(num>2,1,0))/count(*)  from (
 select id,order_type,count(*)num
 from dwd_user_info group by order_type, id
-                                        )a
-                                        group by order_type;
-
+ )a
+group by order_type;
 
 select *from dws_fgl;
 
