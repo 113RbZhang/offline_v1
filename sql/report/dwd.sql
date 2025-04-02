@@ -424,7 +424,7 @@ CREATE EXTERNAL TABLE if not EXISTS dev_offline_report_v1_fine_1.dwd_order_detai
 ) COMMENT '订单详情表'
 
 partitioned by (ds string)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '-- load data '
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 
 LOCATION '/2207A/runbo_zhang/report/gmall/dwd/dwd_order_detail/';
 --data inpath '/2207A/gmall/data/yewu/order_detail' into table dwd_order_detail ;
@@ -516,7 +516,7 @@ CREATE EXTERNAL TABLE if not EXISTS dev_offline_report_v1_fine_1.dwd_order_info 
 ) COMMENT '订单表'
 
 partitioned by (ds string)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '-- load data '
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 LOCATION '/2207A/runbo_zhang/report/gmall/dwd/dwd_order_info/';
 --data inpath '/2207A/gmall/data/yewu/order_info' into table dwd_order_info ;
 
@@ -677,7 +677,7 @@ CREATE EXTERNAL TABLE if not EXISTS dev_offline_report_v1_fine_1.dwd_sku_info(
 ) COMMENT 'SKU商品表'
 
 partitioned by (ds string)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '-- load data '
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 LOCATION '/2207A/runbo_zhang/report/gmall/dwd/dwd_sku_info/';
 --data inpath '/2207A/gmall/data/yewu/sku_info' into table dwd_sku_info ;
 insert overwrite table dev_offline_report_v1_fine_1.dwd_sku_info partition (ds='20250326')
@@ -752,13 +752,21 @@ CREATE EXTERNAL TABLE if not EXISTS dev_offline_report_v1_fine_1.dwd_user_info(
     `gender` STRING COMMENT '性别',
     `create_time` STRING COMMENT '创建时间',
     `operate_time` STRING COMMENT '操作时间',
-    `status` STRING COMMENT '状态'
+    `status` STRING COMMENT '状态',
+    `is_new` STRING COMMENT '新老用户'
 ) COMMENT '用户表'
 partitioned by (ds string)
 
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '-- load data '
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 
-LOCATION '/2207A/runbo_zhang/report/gmall/dwd/dwd_user_info/';
+LOCATION '/2207A/runbo_zhang/report/gmall/dwd/dwd_user_info/'
+
+;
 --data inpath '/2207A/gmall/data/yewu/user_info'into table dwd_user_info ;
-
+insert overwrite table dev_offline_report_v1_fine_1.dwd_user_info partition (ds)
+select *,
+       if(substr(create_time,0,10)>=date_add('2025-03-28',-3),1,0)
+       ,replace(substr(create_time,0,10),'-','')  as ds
+from dev_offline_report_v1_fine_1.ods_user_info;
 select *from dwd_user_info;
+select version();
