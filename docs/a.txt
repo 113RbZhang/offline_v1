@@ -1,0 +1,5 @@
+{"ds": "20250407","ts": "08:15:00","field1": "data_value_1","field2": "100","field3": "false"}
+{"ds": "20250407","ts": "10:30:00","field1": "data_value_2","field2": "200","field3": "true"}
+{"ds": "20250408","ts": "13:45:00","field1": "data_value_3","field2": "300","field3": "false"}
+{"ds": "20250408","ts": "16:00:00","field1": "data_value_4","field2": "400","field3": "true"}
+{"ds": "20250409","ts": "18:15:00","field1": "data_value_5","field2": "500","field3": "false"}
