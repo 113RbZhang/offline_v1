@@ -8,10 +8,7 @@
     <artifactId>spark_2207A_20</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <modules>
-        <module>flinkTestFromKafka</module>
-        <module>stream_dev_v1</module>
-    </modules>
+
 
     <properties>
         <java.version>1.8</java.version>
