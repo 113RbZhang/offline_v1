@@ -8,11 +8,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="flinkTestFromKafka" />
-        <module name="stream_dev_v1" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="offline_v2" target="1.8" />
+      <module name="spark_2207A_20 (1)" target="1.8" />
+      <module name="spark_2207A_20 (2)" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
