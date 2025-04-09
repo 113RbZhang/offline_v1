@@ -1,0 +1,12 @@
+
+drop  'dim_zrb_online_v1:dim_activity_info'
+drop  'dim_zrb_online_v1:dim_activity_rule'
+drop  'dim_zrb_online_v1:dim_activity_sku'
+drop  'dim_zrb_online_v1:dim_base_category1'
+drop  'dim_zrb_online_v1:dim_base_category2'
+drop  'dim_zrb_online_v1:dim_base_category3'
+drop  'dim_zrb_online_v1:dim_base_dic'
+drop  'dim_zrb_online_v1:dim_base_province'
+drop  'dim_zrb_online_v1:dim_base_region'
+drop  'dim_zrb_online_v1:dim_base_trademark'
+drop  'dim_zrb_online_v1:dim_coupon_info'

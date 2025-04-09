@@ -1,0 +1,36 @@
+@Override
+            public void processElement(String value, BroadcastProcessFunction<String, String, Tuple2<String, String>>.ReadOnlyContext ctx, Collector<Tuple2<String, String>> out) throws Exception {
+                JSONObject object = JSON.parseObject(value);
+                String table = object.getJSONObject("source").getString("table");
+                ReadOnlyBroadcastState<String, String> broadcastState = ctx.getBroadcastState(dimRuleStateDescriptor);
+
+                String process = broadcastState.get(table);
+                String after = object.getString("after");
+
+
+
+
+
+                if (process != null) {//获取到配置信息则是维度表
+                    out.collect(Tuple2.of(after, process));
+                }else {
+                    ctx.output(dwdOutputTag, value);
+                }
+            }
+
+            @Override
+            public void processBroadcastElement(String value, BroadcastProcessFunction<String, String, Tuple2<String, String>>.Context ctx, Collector<Tuple2<String, String>> out) throws Exception {
+                JSONObject dim_process = JSON.parseObject(value);
+                String op = dim_process.getString("op");
+
+                String table = dim_process.getJSONObject("after").getString("source_table");
+                BroadcastState<String, String> broadcastState = ctx.getBroadcastState(dimRuleStateDescriptor);
+
+                if ("d".equals(op)) {//如果是删除则删除这个表
+                    broadcastState.remove(table);
+                } else {
+                    //如果不是则添加
+                    broadcastState.put(table, value);
+                }
+
+            }
