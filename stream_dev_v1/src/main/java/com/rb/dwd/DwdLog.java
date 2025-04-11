@@ -23,7 +23,7 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
 /**
- * @Package com.rb.dwd.DwdTest
+ * @Package com.rb.dwd.DwdTradeOrderDetail
  * @Author runbo.zhang
  * @Date 2025/4/10 13:53
  * @description:
