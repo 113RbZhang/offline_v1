@@ -1,6 +1,5 @@
-package com.rb;
+package com.rb.utils;
 
-import com.alibaba.fastjson.JSON;
 import com.ververica.cdc.connectors.mysql.source.MySqlSource;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import com.ververica.cdc.debezium.JsonDebeziumDeserializationSchema;
@@ -9,9 +8,9 @@ import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
-import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
+import org.apache.flink.connector.kafka.source.KafkaSource;
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.util.Properties;
@@ -22,12 +21,12 @@ import java.util.Properties;
  * Date 2025/4/7 20:55
  * description: 1
  */
-public class CdcSource {
+public class SourceSinkUtils {
     public static void main(String[] args) throws Exception {
 
     }
 
-    public static DataStreamSource<String> kafkaRead(StreamExecutionEnvironment env, String dbName, String tableName) throws Exception {
+    public static DataStreamSource<String> cdcRead(StreamExecutionEnvironment env, String dbName, String tableName) throws Exception {
 
 
         env.setParallelism(1);
@@ -53,7 +52,7 @@ public class CdcSource {
                 .username("root")
                 .password("root")
                 .startupOptions(StartupOptions.earliest())
-                .startupOptions(StartupOptions.initial())
+//                .startupOptions(StartupOptions.initial())
                 .debeziumProperties(properties)
                 .deserializer(new JsonDebeziumDeserializationSchema()) // 将 SourceRecord 转换为 JSON 字符串
                 .build();
@@ -67,7 +66,7 @@ public class CdcSource {
         KafkaSink<String> sink = KafkaSink.<String>builder()
                 .setBootstrapServers("cdh03:9092")
                 .setRecordSerializer(KafkaRecordSerializationSchema.builder()
-                        .setTopic("test-kafka")
+                        .setTopic(topic_name)
                         .setValueSerializationSchema(new SimpleStringSchema())
                         .build()
                 )
@@ -77,5 +76,18 @@ public class CdcSource {
         return sink;
 
 
+    }
+    public static DataStreamSource<String>  kafkaRead(StreamExecutionEnvironment env,String topic ){
+
+        KafkaSource<String> source = KafkaSource.<String>builder()
+                .setBootstrapServers("cdh03:9092")
+                .setTopics(topic)
+                .setGroupId(topic)
+                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setValueOnlyDeserializer(new SimpleStringSchema())
+                .build();
+
+        DataStreamSource<String> kafkaSource = env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
+        return kafkaSource;
     }
 }
