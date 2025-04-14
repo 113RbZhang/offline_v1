@@ -20,12 +20,13 @@ public class DwdOrderRefund {
 //        env.setStateBackend(new HashMapStateBackend());
 //        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints");
 //        System.setProperty("HADOOP_USER_NAME", "hdfs");
-
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
+
+
         DwdUtils.dwdKafkaDbInit(tEnv, "log_topic_flink_online_v1_dwd");//全表
         DwdUtils.hbaseBaseDicInit(tEnv, "dim_zrb_online_v1", "dim_base_dic");//base_dic维度表
 
-        DwdUtils.orderInfoRefundStatus(tEnv, "1005");
+        DwdUtils.orderInfoRefundByStatus(tEnv, "1005");
         DwdUtils.orderRefundInfoUtil(tEnv, "", "c");
         Table result = tEnv.sqlQuery(
                 "select " +

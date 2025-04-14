@@ -24,7 +24,7 @@ public class DwdCartAdd {
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
         DwdUtils.dwdKafkaDbInit(tEnv, "log_topic_flink_online_v1_dwd");
 
-        Table table = tEnv.sqlQuery("select " +
+        Table cartAdd = tEnv.sqlQuery("select " +
                 " `after`['id']  id ,\n " +
                 " `after`['user_id']  user_id ,\n " +
                 " `after`['sku_id']  sku_id ,\n " +
@@ -38,7 +38,16 @@ public class DwdCartAdd {
                 "       op='u' and before is not null and  cast(`after`['sku_num'] as int)>cast(`before`['sku_num'] as int) " +
                 ")"
         );
-        table.execute().print();
+        tEnv.executeSql(" create table "+"dwd_cart_add"+"(\n" +
+                "    id string,\n" +
+                "    user_id string,\n" +
+                "    sku_id string,\n" +
+                "    sku_num string,\n" +
+                "    ts bigint,\n" +
+                "    PRIMARY KEY (id) NOT ENFORCED\n" +
+                " )" + SQLUtil.getUpsertKafkaDDL("dwd_cart_add"));
+        //写入
+        cartAdd.executeInsert("dwd_cart_add");
 
 
     }

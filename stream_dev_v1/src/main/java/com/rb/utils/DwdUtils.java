@@ -33,7 +33,7 @@ public class DwdUtils {
 
 //        tEnv.executeSql("select * from base_dic").print();
     }
-    public static void orderInfoRefundStatus(StreamTableEnvironment tEnv,String status){
+    public static void orderInfoRefundByStatus(StreamTableEnvironment tEnv,String status){
         Table orderInfo = tEnv.sqlQuery(
                 "select " +
                         "`after`['id'] id," +

@@ -51,12 +51,24 @@ public class DwdLog {
 
 //        fixNewOldDt.print("fffffffffffff");
 
-        fixNewOldDt.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log"));
+//        fixNewOldDt.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log"));
+//
+////        notJsonData.print("nnnnnnnnn");
+//        notJsonData.sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log_not_json"));
 
-//        notJsonData.print("nnnnnnnnn");
-        notJsonData.sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log_not_json"));
+        OutputTag<String> pageTag = new OutputTag<String>("page") {
+        };
+        SingleOutputStreamOperator<String> process = fixNewOldDt.process(new ProcessFunction<JSONObject, String>() {
+            @Override
+            public void processElement(JSONObject value, ProcessFunction<JSONObject, String>.Context ctx, Collector<String> out) throws Exception {
+                if (value.containsKey("page")) {
+                    ctx.output(pageTag, value.toJSONString());
+                }
+            }
+        });
+        SideOutputDataStream<String> pageDate = process.getSideOutput(pageTag);
 
-
+        pageDate.sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log_page"));
 
         env.disableOperatorChaining();
         env.execute();

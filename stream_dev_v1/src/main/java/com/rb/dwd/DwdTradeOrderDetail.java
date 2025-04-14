@@ -139,6 +139,7 @@ public class DwdTradeOrderDetail {
         result.executeInsert("trade_order_detail");
 
 
+
 //        env.execute("ljklkjk");
     }
 
