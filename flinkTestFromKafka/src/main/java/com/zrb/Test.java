@@ -107,8 +107,9 @@ public class Test {
 //                .forRowFormat(new Path("hdfs://cdh01:8020/path/to/output"), new SimpleStringEncoder<String>("UTF-8"))
                 .build();
 
-        data1.sinkTo(sink);
+//        data1.sinkTo(sink);
 
+        data1.print();
         env.execute();
 
 

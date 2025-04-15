@@ -1,13 +1,12 @@
 package com.rb.dws;
 
-import com.rb.dws.uitil.IkTest;
 import com.rb.dws.uitil.UdtfTest;
 import com.rb.utils.SQLUtil;
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.functions.UserDefinedFunction;
+
 
 /**
  * @Package com.rb.dws.DwsLog
@@ -21,8 +20,9 @@ public class DwsLog {
         env.setParallelism(1);
         env.enableCheckpointing(3000);
         env.setStateBackend(new HashMapStateBackend());
-        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints");
+        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/dws-logs");
         System.setProperty("HADOOP_USER_NAME", "hdfs");
+
 
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
@@ -59,8 +59,28 @@ public class DwsLog {
                 "    TUMBLE(TABLE split_table, DESCRIPTOR(et), INTERVAL '10' second))\n" +
                 "  GROUP BY window_start, window_end,keyword");
 
-        resTable.execute().print();
+//        resTable.execute().print();
 //        table.execute().print();
+
+        tEnv.executeSql("create table dws_traffic_source_keyword_page_view_window(" +
+                "  stt string, " +  // 2023-07-11 14:14:14
+                "  edt string, " +
+                "  cur_date string, " +
+                "  keyword string, " +
+                "  keyword_count bigint " +
+                ")with(" +
+                " 'connector' = 'doris'," +
+                " 'fenodes' = '" + "cdh03:8030" + "'," +
+                "  'table.identifier' = '" + "doris_database_v1" + ".dws_traffic_source_keyword_page_view_window'," +
+                "  'username' = 'root'," +
+                "  'password' = 'root', " +
+                "  'sink.properties.format' = 'json', " +
+                "  'sink.buffer-count' = '4', " +
+                "  'sink.buffer-size' = '4096'," +
+                "  'sink.enable-2pc' = 'false', " + // 测试阶段可以关闭两阶段提交,方便测试
+                "  'sink.properties.read_json_by_line' = 'true' " +
+                ")");
+        resTable.executeInsert("dws_traffic_source_keyword_page_view_window");
 
     }
 }

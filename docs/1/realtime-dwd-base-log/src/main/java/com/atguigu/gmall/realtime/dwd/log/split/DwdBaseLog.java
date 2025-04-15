@@ -204,7 +204,7 @@ public class DwdBaseLog extends BaseApp {
                         Long ts = jsonObj.getLong("ts");
                         String curVisitDate = DateFormatUtil.tsToDate(ts);
 
-                        if ("1".equals(isNew)) {
+                        if ("".equals(isNew)) {
                             //如果is_new的值为1
                             if (StringUtils.isEmpty(lastVisitDate)) {
                                 //如果键控状态为null，认为本次是该访客首次访问 APP，将日志中 ts 对应的日期更新到状态中，不对 is_new 字段做修改；
