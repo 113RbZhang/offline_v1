@@ -62,7 +62,7 @@ public class DwsLog {
 //        resTable.execute().print();
 //        table.execute().print();
 
-        tEnv.executeSql("create table dws_traffic_source_keyword_page_view_window(" +
+        tEnv.executeSql("create table dws_traffic_source_keywozrd_page_view_window(" +
                 "  stt string, " +  // 2023-07-11 14:14:14
                 "  edt string, " +
                 "  cur_date string, " +

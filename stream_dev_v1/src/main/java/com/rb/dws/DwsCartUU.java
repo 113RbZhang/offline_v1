@@ -1,15 +1,13 @@
 package com.rb.dws;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONAware;
 import com.alibaba.fastjson.JSONObject;
-import com.rb.bean.CartUu;
 import com.rb.utils.DateFormatUtil;
 import com.rb.utils.SourceSinkUtils;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.doris.flink.sink.DorisSink;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
-import org.apache.flink.api.common.eventtime.TimestampAssignerSupplier;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.state.ValueState;
@@ -31,24 +29,24 @@ import org.apache.flink.util.Collector;
 import java.time.Duration;
 
 /**
- * @Package com.rb.dws.DwsTest
+ * @Package com.rb.dws.DwsCartUU
  * @Author runbo.zhang
  * @Date 2025/4/14 10:25
  * @description:
  */
-public class DwsTest {
+public class DwsCartUU {
     @SneakyThrows
     public static void main(String[] args) {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
         env.enableCheckpointing(3000);
         env.setStateBackend(new HashMapStateBackend());
-        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints");
+        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/cartuu");
         System.setProperty("HADOOP_USER_NAME", "hdfs");
 
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
         DataStreamSource<String> kafkaRead = SourceSinkUtils.kafkaRead(env, "dwd_cart_add");
-        kafkaRead.print();
+//        kafkaRead.print();
         SingleOutputStreamOperator<JSONObject> JsonObj = kafkaRead.map(JSON::parseObject);
         SingleOutputStreamOperator<JSONObject> waterData = JsonObj.assignTimestampsAndWatermarks(WatermarkStrategy
                 .<JSONObject>forBoundedOutOfOrderness(Duration.ofSeconds(5))
@@ -114,19 +112,19 @@ public class DwsTest {
                                           String date = DateFormatUtil.tsToDate(window.getStart());
                                           String end = DateFormatUtil.tsToDateTime(window.getEnd());
                                           JSONObject object = new JSONObject();
-                                          object.put("start", start);
-                                          object.put("end", end);
-                                          object.put("date", date);
-                                          object.put("cartUUCount", cartUUCount);
+                                          object.put("stt", start);
+                                          object.put("edt", end);
+                                          object.put("cur_date", date);
+                                          object.put("cart_add_uu_ct", cartUUCount);
                                           out.collect(object);
 
 
                                       }
                                   }
                         );
-        aDs.print();
+        aDs.map(JSONAware::toJSONString).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "cart_add_uu_ct_table_v2"));
 
-
+        env.disableOperatorChaining();
         env.execute();
 
     }

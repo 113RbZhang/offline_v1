@@ -115,7 +115,7 @@ public class DwdTradeOrderDetail {
 
 
         tEnv.executeSql(
-                "create table "+" trade_order_detail "+"(" +
+                "create table "+"dwd_trade_order_detail_v1"+"(" +
                         "id string," +
                         "order_id string," +
                         "user_id string," +
@@ -134,9 +134,9 @@ public class DwdTradeOrderDetail {
                         "split_total_amount string," +
                         "ts_ms bigint," +
                         "primary key(id) not enforced " +
-                        ")" + SQLUtil.getUpsertKafkaDDL("trade_order_detail"));
+                        ")" + SQLUtil.getUpsertKafkaDDL("dwd_trade_order_detail_v1"));
 
-        result.executeInsert("trade_order_detail");
+        result.executeInsert("dwd_trade_order_detail_v1");
 
 
 

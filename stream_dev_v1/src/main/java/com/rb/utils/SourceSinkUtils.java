@@ -28,7 +28,11 @@ import java.util.Properties;
  */
 public class SourceSinkUtils {
     public static void main(String[] args) throws Exception {
-
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<String> kafkaRead = kafkaRead(env, "log_topic_flink_online_v1_log");
+        kafkaRead.print();
+        env.execute();
     }
 
     public static DataStreamSource<String> cdcRead(StreamExecutionEnvironment env, String dbName, String tableName) throws Exception {
@@ -87,7 +91,7 @@ public class SourceSinkUtils {
         KafkaSource<String> source = KafkaSource.<String>builder()
                 .setBootstrapServers("cdh03:9092")
                 .setTopics(topic)
-                .setGroupId(topic)
+                .setGroupId(topic+"1")
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setValueOnlyDeserializer(new SimpleStringSchema())
                 .build();
@@ -103,10 +107,10 @@ public class SourceSinkUtils {
         DorisSink<String> sink = DorisSink.<String>builder()
                 .setDorisReadOptions(DorisReadOptions.builder().build())
                 .setDorisOptions(DorisOptions.builder() // 设置 doris 的连接参数
-                        .setFenodes("cdh03:7030")
+                        .setFenodes("cdh03:8030")
                         .setTableIdentifier( db+ "." + tableName)
                         .setUsername("root")
-                        .setPassword("")
+                        .setPassword("root")
                         .build())
                 .setDorisExecutionOptions(DorisExecutionOptions.builder() // 执行参数
                         //.setLabelPrefix("doris-label")  // stream-load 导入的时候的 label 前缀

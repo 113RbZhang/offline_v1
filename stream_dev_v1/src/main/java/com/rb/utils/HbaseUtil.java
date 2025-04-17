@@ -4,12 +4,17 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @Package com.rb.utils.HbaseUtil
@@ -27,6 +32,29 @@ public class HbaseUtil {
 
         Connection connection = ConnectionFactory.createConnection(conf);
         return connection;
+    }
+    public static AsyncConnection getHbaseAsyncCon(){
+        Configuration conf = new Configuration();
+        conf.set("hbase.zookeeper.quorum", "cdh01,cdh02,cdh03");
+        try {
+
+            AsyncConnection connection = ConnectionFactory.createAsyncConnection(conf).get();
+            return connection;
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
+
+    }
+    public static void closeHbaseAsyncCon(AsyncConnection asyncConnection){
+        if (asyncConnection!=null && !asyncConnection.isClosed()){
+            try {
+                asyncConnection.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            ;
+        }
+
     }
 
     //todo 关闭连接
@@ -131,4 +159,39 @@ public class HbaseUtil {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     *  异步查询
+     * @param asyncConnection 连接
+     * @param namespace 库
+     * @param table 表
+     * @param rowKey rowKey
+     * @return
+     */
+    public static JSONObject readDimAsync(AsyncConnection asyncConnection,String namespace ,String table , String rowKey){
+
+
+        try {
+            TableName tableName = TableName.valueOf(namespace, table);
+            AsyncTable<AdvancedScanResultConsumer> asyncTable = asyncConnection.getTable(tableName);
+            Get get = new Get(Bytes.toBytes(rowKey));
+            Result result = asyncTable.get(get).get();
+            List<Cell> cells = result.listCells();
+            if (cells!=null && cells.size()>0  ){
+                JSONObject object = new JSONObject();
+                for (Cell cell : cells) {
+                    String name = Bytes.toString(CellUtil.cloneQualifier(cell));
+                    String value = Bytes.toString(CellUtil.cloneValue(cell));
+                    object.put(name,value);
+                }
+                return object;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
+
+
 }
