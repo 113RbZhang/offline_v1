@@ -49,12 +49,12 @@ public class DwdLog {
 
         SingleOutputStreamOperator<JSONObject> fixNewOldDt = fixNewOld(filtedDataStream);
 
-//        fixNewOldDt.print("fffffffffffff");
+        fixNewOldDt.print("fffffffffffff");
 
-//        fixNewOldDt.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log"));
+        fixNewOldDt.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log"));
 //
-////        notJsonData.print("nnnnnnnnn");
-//        notJsonData.sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log_not_json"));
+        notJsonData.print("nnnnnnnnn");
+        notJsonData.sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v2_log_not_json"));
 
         OutputTag<String> pageTag = new OutputTag<String>("page") {
         };

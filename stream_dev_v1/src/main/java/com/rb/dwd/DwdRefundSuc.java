@@ -38,7 +38,7 @@ public class DwdRefundSuc {
                         "`after`['callback_time'] callback_time," +
                         "`after`['total_amount'] total_amount," +
                         "pt, " +
-                        "ts_ms " +
+                        "`source`['ts_ms']  ts_ms " +
                         "from topic_db " +
                         "where `source`['table']='refund_payment' " +
                         "and `op`='u' " +
@@ -54,7 +54,7 @@ public class DwdRefundSuc {
                         "oi.province_id," +
                         "rp.payment_type," +
                         "dic.info.dic_name payment_type_name," +
-                        "date_format(rp.callback_time,'yyyy-MM-dd') date_id," +
+                        "date_format(FROM_UNIXTIME(CAST(rp.callback_time AS bigint)/1000),'yyyy-MM-dd') date_id," +
                         "rp.callback_time," +
                         "ori.refund_num," +
                         "rp.total_amount," +
@@ -80,7 +80,7 @@ public class DwdRefundSuc {
                 "callback_time string," +
                 "refund_num string," +
                 "refund_amount string," +
-                "ts_ms bigint ," +
+                "ts_ms string ," +
                 "PRIMARY KEY (id) NOT ENFORCED " +
                 ")" + SQLUtil.getUpsertKafkaDDL("dwd_refund_suc"));
         result.executeInsert("dwd_refund_suc");

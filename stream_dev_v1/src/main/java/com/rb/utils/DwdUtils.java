@@ -63,7 +63,7 @@ public class DwdUtils {
                             "`after`['refund_reason_txt'] refund_reason_txt," +
                             "`after`['create_time'] create_time," +
                             "pt," +
-                            "ts_ms " +
+                            "`source`['ts_ms'] ts_ms " +
                             "from topic_db " +
                             "where `source`['table']='order_refund_info' " +
                             "and `op`='c' ");

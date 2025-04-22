@@ -29,29 +29,29 @@ public class DwdOrderRefund {
         DwdUtils.orderInfoRefundByStatus(tEnv, "1005");
         DwdUtils.orderRefundInfoUtil(tEnv, "", "c");
         Table result = tEnv.sqlQuery(
-                "select " +
-                        "ri.id," +
-                        "ri.user_id," +
-                        "ri.order_id," +
-                        "ri.sku_id," +
-                        "oi.province_id," +
-                        "date_format(ri.create_time,'yyyy-MM-dd') date_id," +
-                        "ri.create_time," +
-                        "ri.refund_type," +
-                        "dic1.info.dic_name," +
-                        "ri.refund_reason_type," +
-                        "dic2.info.dic_name," +
-                        "ri.refund_reason_txt," +
-                        "ri.refund_num," +
-                        "ri.refund_amount," +
-                        "ri.ts_ms " +
-                        "from order_refund_info ri " +
-                        "join order_info oi " +
-                        "on ri.order_id=oi.id " +
-                        "join base_dic for system_time as of ri.pt as dic1 " +
-                        "on ri.refund_type=dic1.dic_code " +
-                        "join base_dic for system_time as of ri.pt as dic2 " +
-                        "on ri.refund_reason_type=dic2.dic_code ");
+                "select "  +
+                        " ri.id," +
+                        " ri.user_id," +
+                        " ri.order_id," +
+                        " ri.sku_id," +
+                        " oi.province_id," +
+                        " date_format(FROM_UNIXTIME(CAST(ri.create_time AS bigint)/1000),'yyyy-MM-dd') date_id," +
+                        " ri.create_time," +
+                        " ri.refund_type," +
+                        " dic1.info.dic_name," +
+                        " ri.refund_reason_type," +
+                        " dic2.info.dic_name," +
+                        " ri.refund_reason_txt," +
+                        " ri.refund_num," +
+                        " ri.refund_amount," +
+                        " ri.ts_ms ts " +
+                        " from order_refund_info ri " +
+                        " join order_info oi " +
+                        " on ri.order_id=oi.id " +
+                        " join base_dic for system_time as of ri.pt as dic1 " +
+                        " on ri.refund_type=dic1.dic_code " +
+                        " join base_dic for system_time as of ri.pt as dic2 " +
+                        " on ri.refund_reason_type=dic2.dic_code ");
 
         tEnv.executeSql(
                 "create table "+"dwd_trade_order_refund"+"(" +
@@ -69,7 +69,7 @@ public class DwdOrderRefund {
                         "refund_reason_txt string," +
                         "refund_num string," +
                         "refund_amount string," +
-                        "ts bigint ," +
+                        "ts string ," +
                         "PRIMARY KEY (id) NOT ENFORCED " +
                         ")" + SQLUtil.getUpsertKafkaDDL("dwd_trade_order_refund"));
         result.executeInsert("dwd_trade_order_refund");

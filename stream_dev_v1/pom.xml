@@ -243,6 +243,20 @@
                 </executions>
             </plugin>
         </plugins>
+        <!-- 如果不添加此节点src/main/java目录下的所有配置文件都会被漏掉。 -->
+        <resources>
+<!--        <resource>-->
+<!--            <directory>src/main/java</directory>-->
+<!--            <includes>-->
+<!--                <include>**/*.xml</include>-->
+<!--            </includes>-->
+<!--        </resource>-->
+        <!--让idea识别resources目录-->
+        <resource>
+            <directory>src/main/resources</directory>
+        </resource>
+        </resources>
+
     </build>
 
 

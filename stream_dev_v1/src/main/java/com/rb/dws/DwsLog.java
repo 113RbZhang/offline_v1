@@ -59,8 +59,8 @@ public class DwsLog {
                 "    TUMBLE(TABLE split_table, DESCRIPTOR(et), INTERVAL '10' second))\n" +
                 "  GROUP BY window_start, window_end,keyword");
 
-//        resTable.execute().print();
-//        table.execute().print();
+        resTable.execute().print();
+
 
         tEnv.executeSql("create table dws_traffic_source_keywozrd_page_view_window(" +
                 "  stt string, " +  // 2023-07-11 14:14:14

@@ -33,6 +33,13 @@ public class HbaseUtil {
         Connection connection = ConnectionFactory.createConnection(conf);
         return connection;
     }
+    /***
+     * @author:
+     * @description: 异步连接hbase
+     * @params: []
+     * @return: org.apache.hadoop.hbase.client.AsyncConnection
+     * @date: 2025/4/22 16:52
+     */
     public static AsyncConnection getHbaseAsyncCon(){
         Configuration conf = new Configuration();
         conf.set("hbase.zookeeper.quorum", "cdh01,cdh02,cdh03");
@@ -45,6 +52,11 @@ public class HbaseUtil {
         }
 
     }
+
+    /**
+     * 关闭异步连接
+     * @param asyncConnection
+     */
     public static void closeHbaseAsyncCon(AsyncConnection asyncConnection){
         if (asyncConnection!=null && !asyncConnection.isClosed()){
             try {
@@ -172,17 +184,24 @@ public class HbaseUtil {
 
 
         try {
+            //获取{库名：表名}
             TableName tableName = TableName.valueOf(namespace, table);
+            //获取表对象
             AsyncTable<AdvancedScanResultConsumer> asyncTable = asyncConnection.getTable(tableName);
+
             Get get = new Get(Bytes.toBytes(rowKey));
             Result result = asyncTable.get(get).get();
+
             List<Cell> cells = result.listCells();
+
             if (cells!=null && cells.size()>0  ){
                 JSONObject object = new JSONObject();
                 for (Cell cell : cells) {
+
                     String name = Bytes.toString(CellUtil.cloneQualifier(cell));
                     String value = Bytes.toString(CellUtil.cloneValue(cell));
                     object.put(name,value);
+
                 }
                 return object;
             }

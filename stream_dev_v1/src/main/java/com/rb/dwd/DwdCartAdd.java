@@ -29,7 +29,7 @@ public class DwdCartAdd {
                 " `after`['user_id']  user_id ,\n " +
                 " `after`['sku_id']  sku_id ,\n " +
                 " if(op='c' ,`after`['sku_num'],cast(cast(`after`['sku_num'] as int)-cast(`before`['sku_num'] as int) as string) ) sku_num , \n" +
-                " ts_ms \n" +
+                " `source`['ts_ms']  ts \n" +
                 " from topic_db" +
                 " where `source`['table']='cart_info'" +
                 " and (" +
@@ -43,7 +43,7 @@ public class DwdCartAdd {
                 "    user_id string,\n" +
                 "    sku_id string,\n" +
                 "    sku_num string,\n" +
-                "    ts bigint,\n" +
+                "    ts string,\n" +
                 "    PRIMARY KEY (id) NOT ENFORCED\n" +
                 " )" + SQLUtil.getUpsertKafkaDDL("dwd_cart_add"));
         //写入

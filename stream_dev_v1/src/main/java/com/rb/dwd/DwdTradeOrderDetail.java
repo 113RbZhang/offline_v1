@@ -1,11 +1,20 @@
 package com.rb.dwd;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.rb.utils.DwdUtils;
 import com.rb.utils.SQLUtil;
+import com.rb.utils.SourceSinkUtils;
 import lombok.SneakyThrows;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.types.Row;
+
+import java.util.List;
 
 /**
  * @Package com.rb.dwd.DwdTradeOrderDetail
@@ -45,12 +54,13 @@ public class DwdTradeOrderDetail {
                 "\n, `after`['split_total_amount']  split_total_amount" +
                 "\n, `after`['split_activity_amount']  split_activity_amount" +
                 "\n, `after`['split_coupon_amount']  split_coupon_amount" +
-                "\n, ts_ms" +
+                "\n, `source`['ts_ms']  ts_ms" +
                 "\n from topic_db" +
                 " where `source`['table']='order_detail' " +
                 "   and op='c'");
         tEnv.createTemporaryView("order_detail", orderDetail);
 
+//        orderDetail.execute().print();
         //订单表
         Table orderInfo = tEnv.sqlQuery("select  `after`['id'] id " +
                 "\n, `after`['user_id'] user_id " +
@@ -86,30 +96,49 @@ public class DwdTradeOrderDetail {
 
         Table result = tEnv.sqlQuery(
                 "select " +
-                        "od.id," +
-                        "od.order_id," +
-                        "oi.user_id," +
-                        "od.sku_id," +
-                        "od.sku_name," +
-                        "oi.province_id," +
-                        "act.activity_id," +
-                        "act.activity_rule_id," +
-                        "cou.coupon_id," +
-                        "date_format(od.create_time, 'yyyy-MM-dd') date_id," +  // 年月日
-                        "od.create_time," +
-                        "od.sku_num," +
-                        "od.split_original_amount," +
-                        "od.split_activity_amount," +
-                        "od.split_coupon_amount," +
-                        "od.split_total_amount," +
-                        "od.ts_ms " +
-                        "from order_detail od " +
-                        "join order_info oi on od.order_id=oi.id " +
-                        "left join order_detail_activity act " +
-                        "on od.id=act.order_detail_id " +
-                        "left join order_detail_coupon cou " +
-                        "on od.id=cou.order_detail_id ");
+                        " od.id," +
+                        " od.order_id," +
+                        " oi.user_id," +
+                        " od.sku_id," +
+                        " od.sku_name," +
+                        " oi.province_id," +
+                        " act.activity_id," +
+                        " act.activity_rule_id," +
+                        " cou.coupon_id," +
+                        " date_format(FROM_UNIXTIME(CAST(od.create_time AS bigint)/1000), 'yyyy-MM-dd') date_id," +  // 年月日
+                        " od.create_time," +
+                        " od.sku_num," +
+                        " od.split_original_amount," +
+                        " od.split_activity_amount," +
+                        " od.split_coupon_amount," +
+                        " od.split_total_amount," +
+                        " od.ts_ms " +
+                        " from order_detail od " +
+                        " inner join order_info oi on od.order_id=oi.id and od.id is not null" +
+                        " left join order_detail_activity act " +
+                        " on od.id=act.order_detail_id and act.order_detail_id is not null " +
+                        " left join order_detail_coupon cou " +
+                        " on od.id=cou.order_detail_id and cou.order_detail_id is not null " );
 //        tEnv.createTemporaryView("", );
+//         tEnv.toDataStream(result).print();
+
+        List<String> names = result.getResolvedSchema().getColumnNames();
+        SingleOutputStreamOperator<String> jsonDs = tEnv.toChangelogStream(result)
+                .map(new MapFunction<Row, String>() {
+                    @Override
+                    public String map(Row row) throws Exception {
+
+                        JSONObject object = new JSONObject();
+                        for (int i = 0; i < row.getArity(); i++) {
+                            object.put(names.get(i), row.getField(i));
+                        }
+                        return object.toJSONString();
+
+                    }
+                });
+
+        jsonDs.sinkTo(SourceSinkUtils.sinkToKafka("dwd_trade_order_detail_v1"));
+        env.execute();
 //        result.execute().print();
 //
 
@@ -132,11 +161,12 @@ public class DwdTradeOrderDetail {
                         "split_activity_amount string," +
                         "split_coupon_amount string," +
                         "split_total_amount string," +
-                        "ts_ms bigint," +
+                        "ts_ms string," +
                         "primary key(id) not enforced " +
                         ")" + SQLUtil.getUpsertKafkaDDL("dwd_trade_order_detail_v1"));
 
-        result.executeInsert("dwd_trade_order_detail_v1");
+//        result.executeInsert("dwd_trade_order_detail_v1");
+//        result.e
 
 
 

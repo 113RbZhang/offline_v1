@@ -41,7 +41,7 @@ public class DwsCartUU {
         env.setParallelism(1);
         env.enableCheckpointing(3000);
         env.setStateBackend(new HashMapStateBackend());
-        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/cartuu");
+        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/cartuu1");
         System.setProperty("HADOOP_USER_NAME", "hdfs");
 
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
@@ -79,23 +79,27 @@ public class DwsCartUU {
                 }
             }
         });
-//        waterData.print();
+        waterData.print();
         AllWindowedStream<JSONObject, TimeWindow> windowDs = uuDs.windowAll(TumblingEventTimeWindows.of(Time.seconds(10)));
-        SingleOutputStreamOperator<JSONObject> aDs =
+        SingleOutputStreamOperator<String> aDs =
                 windowDs.
                         aggregate(new AggregateFunction<JSONObject, Long, Long>() {
                                       @Override
                                       public Long createAccumulator() {
+                                          System.out.println("createAccumulator");
                                           return 0L;
                                       }
 
                                       @Override
                                       public Long add(JSONObject value, Long accumulator) {
+
+//                                          System.out.println("add");
                                           return ++accumulator;
                                       }
 
                                       @Override
                                       public Long getResult(Long accumulator) {
+//                                          System.out.println("getResult");
                                           return accumulator;
                                       }
 
@@ -103,10 +107,11 @@ public class DwsCartUU {
                                       public Long merge(Long a, Long b) {
                                           return null;
                                       }
-                                  }, new AllWindowFunction<Long, JSONObject, TimeWindow>() {
+                                  }, new  AllWindowFunction<Long, String, TimeWindow>() {
                                       @Override
-                                      public void apply(TimeWindow window, Iterable<Long> values, Collector<JSONObject> out) throws Exception {
+                                      public void apply(TimeWindow window, Iterable<Long> values, Collector<String> out) throws Exception {
 
+//                                          System.out.println("顶顶顶顶的点点滴滴");
                                           Long cartUUCount = values.iterator().next();
                                           String start = DateFormatUtil.tsToDateTime(window.getStart());
                                           String date = DateFormatUtil.tsToDate(window.getStart());
@@ -116,13 +121,15 @@ public class DwsCartUU {
                                           object.put("edt", end);
                                           object.put("cur_date", date);
                                           object.put("cart_add_uu_ct", cartUUCount);
-                                          out.collect(object);
+
+                                          out.collect(object.toJSONString());
 
 
                                       }
                                   }
                         );
-        aDs.map(JSONAware::toJSONString).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "cart_add_uu_ct_table_v2"));
+//        aDs.print("45431224");
+        aDs.sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "cart_add_uu_ct_table_v2"));
 
         env.disableOperatorChaining();
         env.execute();
