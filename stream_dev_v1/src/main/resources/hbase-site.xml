@@ -3,7 +3,7 @@
 <configuration>
     <property>
         <name>hbase.rootdir</name>
-        <value>hdfs://node00:8020/HBase</value>
+        <value>hdfs://cdh01:8020/HBase</value>
     </property>
 
     <property>
@@ -13,7 +13,7 @@
 
     <property>
         <name>hbase.zookeeper.quorum</name>
-        <value>node00</value>
+        <value>cdh01</value>
     </property>
 
     <property>

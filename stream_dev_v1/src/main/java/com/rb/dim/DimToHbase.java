@@ -123,7 +123,7 @@ public class DimToHbase {
 
 
 
-//        dimTablesStream.addSink(hbaseSink());
+        dimTablesStream.addSink(hbaseSink());
         sideOutput.sinkTo(SourceSinkUtils.sinkToKafka("log_topic_flink_online_v1_dwd"));
 
 

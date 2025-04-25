@@ -9,6 +9,12 @@ package com.rb.utils;
  */
 public class SQLUtil {
     //获取kafka连接器的连接属性
+
+    /**
+     * 从kafka读取
+     * @param topic
+     * @return
+     */
     public static String getKafkaDDL(String topic) {
         return " WITH (\n" +
                 "  'connector' = 'kafka',\n" +
@@ -35,6 +41,11 @@ public class SQLUtil {
     }
 
     //获取upsert-kafka连接器的连接属性
+    /**
+     * 向kafka写入
+     * @param topic
+     * @return
+     */
     public static String getUpsertKafkaDDL(String topic) {
         return " WITH (\n" +
                 "  'connector' = 'upsert-kafka',\n" +

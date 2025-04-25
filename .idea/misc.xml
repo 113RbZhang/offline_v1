@@ -6,6 +6,7 @@
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/flinkTestFromKafka/pom.xml" />
+        <option value="$PROJECT_DIR$/stream_dev_v1/pom.xml" />
       </list>
     </option>
   </component>

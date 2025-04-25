@@ -2,37 +2,31 @@ package com.rb.dws;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.rb.fuction.DimAsync;
 import com.rb.utils.DateFormatUtil;
 import com.rb.utils.HbaseUtil;
 import com.rb.utils.SourceSinkUtils;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.common.state.StateTtlConfig;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
-
 import org.apache.flink.api.common.time.Time;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
 import org.apache.flink.streaming.api.datastream.*;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
-
 import org.apache.flink.streaming.api.functions.async.ResultFuture;
 import org.apache.flink.streaming.api.functions.async.RichAsyncFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
-
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import org.apache.hadoop.hbase.client.AsyncConnection;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -49,9 +43,10 @@ public class DwsSkuOrder {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
         // 设置 3s 的 checkpoint 间隔
-//        env.enableCheckpointing(3000);
-//        env.setStateBackend(new HashMapStateBackend());
-//        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints");
+        System.setProperty("HADOOP_USER_NAME", "hdfs");
+        env.enableCheckpointing(3000);
+        env.setStateBackend(new HashMapStateBackend());
+        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/DwsSkuOrder");
         DataStreamSource<String> kafkaRead = SourceSinkUtils.kafkaRead(env, "dwd_trade_order_detail_v1");
 //        kafkaRead.print();
         SingleOutputStreamOperator<JSONObject> process = kafkaRead.process(new ProcessFunction<String, JSONObject>() {
@@ -69,13 +64,13 @@ public class DwsSkuOrder {
             }
         });
         KeyedStream<JSONObject, String> keyedStream = process.keyBy(o -> o.getString("id"));
-        kafkaRead.print();
+//        kafkaRead.print();
         SingleOutputStreamOperator<JSONObject> distinctDs = keyedStream.process(new KeyedProcessFunction<String, JSONObject, JSONObject>() {
             private ValueState<JSONObject> valueState;
 
             @Override
             public void open(Configuration parameters) throws Exception {
-                ValueStateDescriptor<JSONObject> stateDescriptor = new ValueStateDescriptor<>("", JSONObject.class);
+                ValueStateDescriptor<JSONObject> stateDescriptor = new ValueStateDescriptor<>("dsfsdf", JSONObject.class);
                 stateDescriptor.enableTimeToLive(StateTtlConfig.newBuilder(Time.seconds(10)).build());
                 valueState = getRuntimeContext().getState(stateDescriptor);
             }
@@ -119,10 +114,10 @@ public class DwsSkuOrder {
                         .reduce(new ReduceFunction<JSONObject>() {
                                     @Override
                                     public JSONObject reduce(JSONObject v1, JSONObject v2) throws Exception {
-                                        v1.put("split_original_amount", v1.getDouble("split_original_amount") + v2.getDouble("split_original_amount"));
-                                        v1.put("split_coupon_amount", v1.getDouble("split_coupon_amount") + v2.getDouble("split_coupon_amount"));
-                                        v1.put("split_activity_amount", v1.getDouble("split_activity_amount") + v2.getDouble("split_activity_amount"));
-                                        v1.put("split_total_amount", v1.getDouble("split_total_amount") + v2.getDouble("split_total_amount"));
+                                        v1.put("reduce_original_amount", v1.getDouble("split_original_amount") + v2.getDouble("split_original_amount"));
+                                        v1.put("reduce_coupon_amount", v1.getDouble("split_coupon_amount") + v2.getDouble("split_coupon_amount"));
+                                        v1.put("reduce_activity_amount", v1.getDouble("split_activity_amount") + v2.getDouble("split_activity_amount"));
+                                        v1.put("reduce_total_amount", v1.getDouble("split_total_amount") + v2.getDouble("split_total_amount"));
                                         return v1;
                                     }
                                 }, new ProcessWindowFunction<JSONObject, JSONObject, String, TimeWindow>() {
@@ -141,18 +136,19 @@ public class DwsSkuOrder {
                                     }
                                 }
                         );
-        reduce.print("lkj");
+//        reduce.print("lkj");
 
+        //todo 异步连接sku_id
         DataStream<JSONObject> resultStream =
                 AsyncDataStream.unorderedWait(reduce,
                         //如何发送异步请求
                         new RichAsyncFunction<JSONObject, JSONObject>() {
-                    private AsyncConnection hbaseCon;
+                            private AsyncConnection hbaseCon;
 
 
                             @Override
                             public void open(Configuration parameters) throws Exception {
-                                hbaseCon= HbaseUtil.getHbaseAsyncCon();
+                                hbaseCon = HbaseUtil.getHbaseAsyncCon();
                             }
 
                             @Override
@@ -163,8 +159,8 @@ public class DwsSkuOrder {
                             @Override
                             public void asyncInvoke(JSONObject data, ResultFuture<JSONObject> resultFuture) throws Exception {
                                 String skuId = data.getString("sku_id");
-                                JSONObject dimAsync = HbaseUtil.readDimAsync(hbaseCon, "", "", skuId);
-                                if (dimAsync!=null){
+                                JSONObject dimAsync = HbaseUtil.readDimAsync(hbaseCon, "dim_zrb_online_v1", "dim_sku_info", skuId);
+                                if (dimAsync != null) {
                                     data.put("sku_name", dimAsync.getString("sku_name"));
                                     data.put("spu_id", dimAsync.getString("spu_id"));
                                     data.put("category3_id", dimAsync.getString("category3_id"));
@@ -172,26 +168,124 @@ public class DwsSkuOrder {
                                     //处理后的数据传入下游
                                     resultFuture.complete(Collections.singleton(data));
 
-                                }else {
+                                } else {
                                     System.out.println("未查询到dim维度数据，关联失败");
+//                                    System.out.println("aaaaaa"+skuId);
+//                                    System.out.println("aaaaaaa"+dimAsync.toJSONString());
                                 }
 
                             }
                         },
-                        60, TimeUnit.SECONDS);
-        resultStream.print();
-//        AsyncRetryStrategy asyncRetryStrategy =
-//                new AsyncRetryStrategies.FixedDelayRetryStrategyBuilder(3, 100L) // maxAttempts=3, fixedDelay=100ms
-//                        .ifResult(RetryPredicates.EMPTY_RESULT_PREDICATE)
-//                        .ifException(RetryPredicates.HAS_EXCEPTION_PREDICATE)
-//                        .build();
+                        200, TimeUnit.SECONDS);
+//        resultStream.print();
 
-//// 应用异步 I/O 转换操作并启用重试
-//        DataStream<Tuple2<String, String>> resultStream =
-//                AsyncDataStream.unorderedWaitWithRetry(stream, new AsyncDatabaseRequest(), 1000, TimeUnit.MILLISECONDS, 100, asyncRetryStrategy);
+        //todo 异步连接spu_id
+        SingleOutputStreamOperator<JSONObject> spu_connect = AsyncDataStream.unorderedWait(resultStream,
+                new DimAsync<JSONObject>() {
+                    @Override
+                    public void addDims(JSONObject obj, JSONObject dimJsonObj) {
+                        String spuName = dimJsonObj.getString("spu_name");
+                        obj.put("spu_name", spuName);
+                    }
+
+                    @Override
+                    public String getTableName() {
+                        return "dim_spu_info";
+                    }
+
+                    @Override
+                    public String getRowKey(JSONObject obj) {
+                        return obj.getString("spu_id");
+                    }
+                },
+                100, TimeUnit.SECONDS);
+//spu_connect.print();
+        // todo 连接c3
+        SingleOutputStreamOperator<JSONObject> c3_connect = AsyncDataStream.unorderedWait(spu_connect, new DimAsync<JSONObject>() {
+            @Override
+            public void addDims(JSONObject obj, JSONObject dimJsonObj) {
+
+                obj.put("category3_name", dimJsonObj.getString("name"));
+                obj.put("category2_id", dimJsonObj.getString("category2_id"));
+            }
+
+            @Override
+            public String getTableName() {
+                return "dim_base_category3";
+            }
+
+            @Override
+            public String getRowKey(JSONObject obj) {
+                return obj.getString("category3_id");
+            }
+        }, 60, TimeUnit.SECONDS);
+//        c3_connect.print();
+
+        //连接c2
+        SingleOutputStreamOperator<JSONObject> c2_connect = AsyncDataStream.unorderedWait(c3_connect, new DimAsync<JSONObject>() {
+            @Override
+            public void addDims(JSONObject obj, JSONObject dimJsonObj) {
+
+                obj.put("category2_name", dimJsonObj.getString("name"));
+                obj.put("category1_id", dimJsonObj.getString("category1_id"));
+            }
+
+            @Override
+            public String getTableName() {
+                return "dim_base_category2";
+            }
+
+            @Override
+            public String getRowKey(JSONObject obj) {
+                return obj.getString("category2_id");
+            }
+        }, 60, TimeUnit.SECONDS);
 
 
+        //连接c1
+        SingleOutputStreamOperator<JSONObject> c1_connect = AsyncDataStream.unorderedWait(c2_connect, new DimAsync<JSONObject>() {
+            @Override
+            public void addDims(JSONObject obj, JSONObject dimJsonObj) {
+
+                obj.put("category1_name", dimJsonObj.getString("name"));
+
+            }
+
+            @Override
+            public String getTableName() {
+                return "dim_base_category1";
+            }
+
+            @Override
+            public String getRowKey(JSONObject obj) {
+                return obj.getString("category1_id");
+            }
+        }, 60, TimeUnit.SECONDS);
+
+//连接c1
+        SingleOutputStreamOperator<JSONObject> tm_connect = AsyncDataStream.unorderedWait(c1_connect, new DimAsync<JSONObject>() {
+            @Override
+            public void addDims(JSONObject obj, JSONObject dimJsonObj) {
+
+                obj.put("tm_name", dimJsonObj.getString("tm_name"));
+
+            }
+
+            @Override
+            public String getTableName() {
+                return "dim_base_trademark";
+            }
+
+            @Override
+            public String getRowKey(JSONObject obj) {
+                return obj.getString("tm_id");
+            }
+        }, 60, TimeUnit.SECONDS);
+
+        tm_connect.print();
+        tm_connect.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "dws_trade_sku_order_window"));
         env.disableOperatorChaining();
         env.execute();
     }
+
 }
