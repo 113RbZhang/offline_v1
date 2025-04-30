@@ -161,8 +161,6 @@ public class DimToHbase {
                     String family = processJson.getJSONObject("after").getString("sink_family");
                     HbaseUtil.putRow(hbaseConnection, "dim_zrb_online_v1", sinkTable, sinkRowKey, family, dataJson.toJSONString());
                 }
-
-
             }
         };
         return sinkFunction;
